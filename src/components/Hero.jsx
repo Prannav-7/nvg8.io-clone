@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
 // SVG Icon Components - Black silhouettes without backgrounds
 const MovieIcon = () => (
@@ -57,91 +57,129 @@ const Hero = () => {
     // State for quick fade effect
     const [isFading, setIsFading] = useState(false);
 
-    useEffect(() => {
-        // Every 3 seconds: quick fade out, shuffle, quick fade in
-        const interval = setInterval(() => {
-            // Fade out (0.2s)
-            setIsFading(true);
+    // State to track if user has scrolled
+    const [hasScrolled, setHasScrolled] = useState(false);
 
-            // After fade out, shuffle positions instantly
+    // Scroll-based animation reference
+    const containerRef = useRef(null);
+    const { scrollYProgress } = useScroll({
+        target: containerRef,
+        offset: ["start start", "end start"]
+    });
+
+    // Detect scroll and stop shuffle
+    useEffect(() => {
+        const unsubscribe = scrollYProgress.on("change", (latest) => {
+            if (latest > 0.05 && !hasScrolled) {
+                setHasScrolled(true); // Stop shuffle when user scrolls
+            }
+        });
+        return () => unsubscribe();
+    }, [scrollYProgress, hasScrolled]);
+
+    // Shuffle animation - runs only when user hasn't scrolled yet
+    useEffect(() => {
+        if (hasScrolled) return; // Stop if user scrolled
+
+        const interval = setInterval(() => {
+            setIsFading(true);
             setTimeout(() => {
                 setBoxPositions(prev => {
-                    // Rotate positions
                     return [prev[4], prev[0], prev[1], prev[2], prev[3]];
                 });
-
-                // Immediately fade back in (0.2s)
                 setTimeout(() => {
                     setIsFading(false);
                 }, 50);
-            }, 200);
+            }, 300);
         }, 3000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [hasScrolled]);
 
     return (
         <section
+            ref={containerRef}
             id="home"
-            className="h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden bg-black px-6"
+            className="relative overflow-hidden bg-black"
+            style={{ height: '300vh' }} // Taller section to prevent jumping to next section
         >
-            {/* Centered Heading and Button */}
-            <motion.div
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.2 }}
-                className="text-center z-20 mb-auto mt-32"
-            >
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-white leading-tight">
-                    Your data runs the world
-                </h1>
-                <p className="text-xl md:text-2xl text-gray-300 mb-8">
-                    Start earning from it today.
-                </p>
-            </motion.div>
+            {/* Sticky container that stays in viewport */}
+            <div className="sticky top-0 h-screen w-screen flex flex-col items-center justify-center px-6" style={{ willChange: 'transform' }}>
+                {/* Centered Heading and Button */}
+                <motion.div
+                    initial={{ opacity: 0, y: -30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, delay: 0.2 }}
+                    className="text-center z-20 mb-auto mt-32"
+                >
+                    <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-white leading-tight">
+                        Your data runs the world
+                    </h1>
+                    <p className="text-xl md:text-2xl text-gray-300 mb-8">
+                        Start earning from it today.
+                    </p>
+                </motion.div>
 
-            {/* Bottom Icon Boxes Container - Full Width Coverage */}
-            <div className="w-full max-w-[96vw] flex items-end justify-center gap-2 md:gap-3 pb-4 z-10 px-2">
-                {[0, 1, 2, 3, 4].map((positionIndex) => {
-                    const boxIndex = boxPositions[positionIndex];
-                    const currentBox = boxData[boxIndex];
-                    const IconComponent = currentBox.icon;
+                {/* Bottom Icon Boxes Container - Staggered One-by-One Scroll Effect */}
+                <div className="w-full max-w-[96vw] flex items-end justify-center gap-2 md:gap-3 pb-4 z-10 px-2">
+                    {[0, 1, 2, 3, 4].map((positionIndex) => {
+                        const boxIndex = boxPositions[positionIndex];
+                        const currentBox = boxData[boxIndex];
+                        const IconComponent = currentBox.icon;
 
-                    return (
-                        <motion.div
-                            key={boxIndex}
-                            className="relative flex items-center justify-center overflow-hidden flex-1"
-                            style={{
-                                minWidth: '160px',
-                                maxWidth: '320px',
-                                height: 'clamp(300px, 22vw, 380px)', // All boxes same size as circles
-                                background: currentBox.bg,
-                                borderRadius: currentBox.borderRadius,
-                            }}
-                            animate={{
-                                opacity: isFading ? 0 : 1,
-                                scale: isFading ? 0.7 : 1,
-                            }}
-                            transition={{
-                                type: 'spring',
-                                stiffness: 300,
-                                damping: 25,
-                                mass: 0.8
-                            }}
-                        >
-                            {/* Icon permanently attached to this box - no animation */}
-                            <div
-                                className="w-[60%] h-[60%] text-black flex items-center justify-center"
+                        // Smooth staggered animation - boxes move one by one
+                        // Slower timing to prevent stuttering
+                        const delay = positionIndex * 0.08; // Closer timing for smoother cascade
+                        const animDuration = 0.6; // Longer, smoother movement
+
+                        const boxY = useTransform(
+                            scrollYProgress,
+                            [delay, delay + animDuration],
+                            [0, -500] // Smooth upward movement
+                        );
+                        const boxScale = useTransform(
+                            scrollYProgress,
+                            [delay, delay + animDuration * 0.7, delay + animDuration],
+                            [1, 0.9, 0.7] // Gradual smooth shrink
+                        );
+
+                        return (
+                            <motion.div
+                                key={boxIndex}
+                                className="relative flex items-center justify-center overflow-hidden flex-1"
                                 style={{
-                                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
+                                    minWidth: '160px',
+                                    maxWidth: '320px',
+                                    height: 'clamp(300px, 22vw, 380px)',
+                                    background: currentBox.bg,
+                                    borderRadius: currentBox.borderRadius,
+                                    y: boxY,
+                                    scale: boxScale,
+                                    willChange: 'transform', // Performance hint
+                                }}
+                                animate={{
+                                    opacity: !hasScrolled && isFading ? 0 : 1, // Fade only before scroll
+                                    scale: !hasScrolled && isFading ? 0.7 : 1,
+                                }}
+                                transition={{
+                                    duration: 0.3,
+                                    ease: 'easeInOut'
                                 }}
                             >
-                                <IconComponent />
-                            </div>
-                        </motion.div>
-                    );
-                })}
-            </div>
+                                {/* Icon permanently attached to this box - no animation */}
+                                <div
+                                    className="w-[60%] h-[60%] text-black flex items-center justify-center"
+                                    style={{
+                                        filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
+                                    }}
+                                >
+                                    <IconComponent />
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </div> {/* Close sticky container */}
         </section>
     );
 };
