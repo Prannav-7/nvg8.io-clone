@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
-// SVG Icon Components
 const MovieIcon = () => (
     <svg viewBox="0 0 100 100" fill="currentColor">
         <rect x="15" y="30" width="70" height="45" rx="4" />
@@ -14,40 +13,41 @@ const MovieIcon = () => (
 
 const LockIcon = () => (
     <svg viewBox="0 0 100 100" fill="currentColor">
-        <rect x="28" y="50" width="44" height="38" rx="5" />
-        <path d="M35 50V37c0-8.3 6.7-15 15-15s15 6.7 15 15v13" fill="none" stroke="currentColor" strokeWidth="8" />
+        <rect x="25" y="45" width="50" height="40" rx="4" />
+        <path d="M35 45V30c0-8.3 6.7-15 15-15s15 6.7 15 15v15h-8V30c0-3.9-3.1-7-7-7s-7 3.1-7 7v15h-8z" />
     </svg>
 );
 
 const TshirtIcon = () => (
     <svg viewBox="0 0 100 100" fill="currentColor">
-        <path d="M50 28c-6 0-10 4-10 4L25 20 10 32l10 18v28h60V50l10-18-15-12-15 12s-4-4-10-4z" />
+        <path d="M20 25l15-10 15 10 15-10 15 10v20l-10 5v35h-40v-35l-10-5z" />
     </svg>
 );
 
 const GhostIcon = () => (
     <svg viewBox="0 0 100 100" fill="currentColor">
-        <path d="M50 18C32 18 20 30 20 45v38l10-7 10 7 10-7 10 7 10-7 10 7V45C80 30 68 18 50 18z" />
-        <circle cx="38" cy="45" r="5" fill="#f97316" />
-        <circle cx="62" cy="45" r="5" fill="#f97316" />
+        <path d="M20 50c0-16.6 13.4-30 30-30s30 13.4 30 30v35l-7.5-7.5-7.5 7.5-7.5-7.5-7.5 7.5-7.5-7.5-7.5 7.5V50z" />
+        <circle cx="40" cy="45" r="5" fill="black" />
+        <circle cx="60" cy="45" r="5" fill="black" />
     </svg>
 );
 
 const MusicIcon = () => (
     <svg viewBox="0 0 100 100" fill="currentColor">
-        <ellipse cx="32" cy="72" rx="15" ry="10" />
-        <rect x="42" y="25" width="8" height="50" />
-        <path d="M50 25c0 0 25-8 25 12v8c0 0-20-10-25-8z" />
+        <circle cx="35" cy="75" r="12" />
+        <circle cx="75" cy="65" r="12" />
+        <path d="M47 75V25l40-10v50" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M47 35l40-10" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
 
 const Hero = () => {
-    const boxData = [
-        { bg: '#16a34a', borderRadius: '1.5rem', icon: MovieIcon },
-        { bg: '#eab308', borderRadius: '1.5rem', icon: LockIcon },
-        { bg: '#3b82f6', borderRadius: '50%', icon: TshirtIcon },
-        { bg: '#f97316', borderRadius: '2rem', icon: GhostIcon },
-        { bg: '#a78bfa', borderRadius: '50%', icon: MusicIcon },
+    const featureData = [
+        { id: 'music', label: "MUSIC STREAMING", bg: '#a78bfa', borderRadius: '50%', icon: MusicIcon },
+        { id: 'movie', label: "MOVIES & TV SHOWS", bg: '#16a34a', borderRadius: '1.5rem', icon: MovieIcon },
+        { id: 'lock', label: "SECURE & PRIVATE", bg: '#eab308', borderRadius: '1.5rem', icon: LockIcon },
+        { id: 'shirt', label: "FASHION & STYLE", bg: '#3b82f6', borderRadius: '1.5rem', icon: TshirtIcon },
+        { id: 'ghost', label: "GAMING REWARDS", bg: '#f97316', borderRadius: '2rem', icon: GhostIcon },
     ];
 
     const [boxPositions, setBoxPositions] = useState([0, 1, 2, 3, 4]);
@@ -55,63 +55,85 @@ const Hero = () => {
     const [hasScrolled, setHasScrolled] = useState(false);
 
     const containerRef = useRef(null);
+    const slotRefs = useRef([]);
+    const [slotPositions, setSlotPositions] = useState([]);
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end start"]
     });
 
-    useEffect(() => {
-        const unsubscribe = scrollYProgress.on("change", (latest) => {
-            if (latest > 0.05 && !hasScrolled) {
-                setHasScrolled(true);
-            }
-        });
-        return () => unsubscribe();
-    }, [scrollYProgress, hasScrolled]);
+    const backgroundColor = useTransform(
+        scrollYProgress,
+        [0, 0.5, 0.65],
+        ['#000000', '#000000', '#ffffff']
+    );
 
+    // Track scroll behavior
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 50) {
+                setHasScrolled(true);
+            } else {
+                setHasScrolled(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Initial shuffle effect
     useEffect(() => {
         if (hasScrolled) return;
 
         const interval = setInterval(() => {
             setIsFading(true);
             setTimeout(() => {
-                setBoxPositions(prev => [prev[4], prev[0], prev[1], prev[2], prev[3]]);
-                setTimeout(() => setIsFading(false), 50);
-            }, 300);
+                setBoxPositions(prev => [...prev].sort(() => Math.random() - 0.5));
+                setIsFading(false);
+            }, 500);
         }, 3000);
 
         return () => clearInterval(interval);
     }, [hasScrolled]);
 
-    // Background color transition - only changes at the very end when icons are tiny
-    const backgroundColor = useTransform(
-        scrollYProgress,
-        [0, 0.85, 0.95, 1],
-        ['#000000', '#000000', '#1a1a1a', '#ffffff']
-    );
+    // Measure slot positions
+    useEffect(() => {
+        const updatePositions = () => {
+            const positions = slotRefs.current.map(ref => {
+                if (!ref) return { x: 0, y: 0 };
+                const rect = ref.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                return {
+                    x: centerX - window.innerWidth / 2,
+                    y: centerY - window.innerHeight / 2
+                };
+            });
+            setSlotPositions(positions);
+        };
+
+        updatePositions();
+        window.addEventListener('resize', updatePositions);
+        return () => window.removeEventListener('resize', updatePositions);
+    }, [hasScrolled]);
 
     return (
-        <section
-            ref={containerRef}
-            id="home"
-            className="relative"
-            style={{ height: '500vh' }}  // Extended height for longer shrinking animation
-        >
+        <section ref={containerRef} className="relative w-full" style={{ height: '800vh' }}>
             <motion.div
-                className="sticky top-0 h-screen w-screen flex flex-col items-center justify-center overflow-hidden"
+                className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden"
                 style={{ backgroundColor }}
             >
-                {/* Heading - Fades out on scroll */}
+                {/* Initial Content */}
                 <motion.div
-                    initial={{ opacity: 0, y: -30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 0.2 }}
-                    className="text-center z-20 absolute top-32"
+                    className="text-center z-10 px-4 mb-24"
                     style={{
-                        opacity: useTransform(scrollYProgress, [0, 0.2], [1, 0])
+                        opacity: useTransform(scrollYProgress, [0, 0.15], [1, 0]),
+                        y: useTransform(scrollYProgress, [0, 0.15], [0, -50]),
                     }}
                 >
-                    <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-white leading-tight">
+                    <h1 className="text-5xl md:text-8xl font-black text-white mb-6 tracking-tight leading-tight">
                         Your data runs the world
                     </h1>
                     <p className="text-xl md:text-2xl text-gray-300 mb-8">
@@ -119,127 +141,141 @@ const Hero = () => {
                     </p>
                 </motion.div>
 
-                {/* Icons Container - All icons wrapped in one div */}
-                <div className="icon-group absolute inset-0 flex items-center justify-center">
-                    {[0, 1, 2, 3, 4].map((positionIndex) => {
-                        const boxIndex = boxPositions[positionIndex];
-                        const currentBox = boxData[boxIndex];
-                        const IconComponent = currentBox.icon;
+                {/* Icons Layer */}
+                <div className="icon-group absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                    {featureData.map((item, index) => {
+                        const positionIndex = boxPositions.indexOf(index);
+                        const IconComponent = item.icon;
 
-                        // Spacing with visible gaps like reference (~15-20px between icons)
-                        // Icons are 290px * 0.85 = 247px, so need 265-270px spacing for visible gaps
-                      const horizontalPosition = [-600, -300, 0, 300, 600];
+                        // Animation Phases
+                        const phase1End = 0.25; // Convergence
+                        const phase2End = 0.6; // Step Back (Shrink & Down)
+                        const phase3Start = 0.65;
+                        const phase3End = 0.9; // Fly to slots
 
-                        // When converged, space them out in a row (smaller gaps since they're smaller)
-                        const convergedPosition = [-280, -140, 0, 140, 280];
+                        // Base positions - tight consistent spacing
+                        const horizontalPositions = [-640, -320, 0, 320, 640];
+                        const widePositions = [-630, -320, 0, 320, 640]; // Same as horizontal for consistent gap
 
-                        // Staggered timing - each icon moves at different scroll progress (left to right)
-                        const staggerDelay = positionIndex * 0.08; // 0, 0.08, 0.16, 0.24, 0.32
+                        // Target Slot Position
+                        const targetPos = slotPositions[index] || { x: 0, y: 0 };
 
-                        // Phase 1: Move to middle (staggered)
-                        const phase1Start = 0.1 + staggerDelay;
-                        const phase1End = 0.25 + staggerDelay;
-
-                        // Phase 2: Converge horizontally (0.35 to 0.5)
-                        const phase2Start = 0.35;
-                        const phase2End = 0.5;
-
-                        // Phase 3: Gradual shrinking (0.5 to 0.9)
-                        const shrinkStart = 0.5;
-                        const shrinkEnd = 0.9;
-
-                        // Horizontal position - stays same in phase 1, converges to center in phase 2
-                        // Then scales proportionally with size to maintain small gaps
-                        // Use same spacing as start to maintain consistent gaps (no overlap!)
-                        const baseConvergedPosition = [-530, -265, 0, 265, 530];
-
-                        // Scale horizontal spacing proportionally with icon size
-                        // This maintains consistent VISUAL gaps throughout the animation
-                        const scaledSpacing = useTransform(
+                        // X interpolation
+                        const boxX = useTransform(
                             scrollYProgress,
-                            [0, phase2End, shrinkStart, 0.65, 0.75, shrinkEnd, 0.95, 1],
+                            [0, phase1End, phase2End, phase3Start, phase3End],
                             [
-                                horizontalPosition[positionIndex],     // Start spread out
-                                baseConvergedPosition[positionIndex],  // Converge to this spacing
-                                baseConvergedPosition[positionIndex] * 1.0,   // Maintain (scale 0.8)
-                                baseConvergedPosition[positionIndex] * 0.75,  // Shrink spacing (scale 0.6)
-                                baseConvergedPosition[positionIndex] * 0.5,   // More shrink (scale 0.4)
-                                baseConvergedPosition[positionIndex] * 0.31,  // Even smaller (scale 0.25)
-                                baseConvergedPosition[positionIndex] * 0.23,  // Final (scale 0.18)
-                                baseConvergedPosition[positionIndex] * 0.23   // Maintain final
+                                widePositions[positionIndex] || 0,
+                                horizontalPositions[positionIndex] || 0,
+                                horizontalPositions[positionIndex] || 0,
+                                horizontalPositions[positionIndex] || 0,
+                                targetPos.x
                             ]
                         );
 
-                        const boxX = scaledSpacing;
-
-                        // Vertical movement - two phases
-                        // Phase 1: Move to middle one by one
-                        // Phase 2: STAY at middle while converging and shrinking
+                        // Y interpolation (Rise from bottom -> Equal Middle -> Step Back -> Slot)
                         const boxY = useTransform(
                             scrollYProgress,
-                            [0, phase1Start, phase1End, 1],
-                            [
-                                200,    // Start at bottom
-                                200,    // Wait until stagger time
-                                0,      // Move to middle
-                                0       // STAY at middle (no top movement)
-                            ]
+                            [0, phase1End, phase2End, phase3Start, phase3End],
+                            [280, 0, 120, 120, targetPos.y]
                         );
 
-                        // Scaling - larger icons, shrink to small at top
+                        // Size interpolation (Stay same size until flying to text)
                         const boxScale = useTransform(
                             scrollYProgress,
-                            [0, phase1Start, phase1End, phase2Start, phase2End, shrinkStart, 0.65, 0.75, shrinkEnd, 0.95, 1],
-                            [
-                                0.85,  // Start with normal size
-                                0.85,  // Same size
-                                0.85,  // Stay same in middle
-                                0.85,  // Stay before converging
-                                0.8,   // Slightly smaller after converge
-                                0.8,   // Maintain size
-                                0.6,   // Start gradual shrinking
-                                0.4,   // Continue shrinking
-                                0.25,  // More shrinking
-                                0.18,  // Very small at top
-                                0.18   // Final small size
-                            ]
+                            [0, phase1End, phase2End, phase3Start, phase3End],
+                            [1, 1, 1, 1, 0.4] // Constant size until text phase
                         );
 
                         return (
                             <motion.div
-                                key={boxIndex}
-                                className="absolute flex items-center justify-center"
+                                key={item.id}
+                                className="absolute flex items-center justify-center overflow-hidden border-[3px] border-black shadow-xl"
                                 style={{
-                                    width: '290px', // Reduced size to prevent overlap
-                                    height: '290px',
-                                    background: currentBox.bg,
-                                    borderRadius: currentBox.borderRadius,
                                     x: boxX,
                                     y: boxY,
                                     scale: boxScale,
+                                    width: 280,
+                                    height: 280,
+                                    background: item.bg,
+                                    borderRadius: item.borderRadius,
                                     willChange: 'transform',
                                 }}
                                 animate={{
                                     opacity: !hasScrolled && isFading ? 0 : 1,
-                                    scale: !hasScrolled && isFading ? 0.7 : 1,
-                                }}
-                                transition={{
-                                    duration: 0.3,
-                                    ease: 'easeInOut'
                                 }}
                             >
-                                <div
-                                    className="w-[60%] h-[60%] text-black flex items-center justify-center"
-                                    style={{
-                                        filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
-                                    }}
-                                >
+                                <div className="w-[60%] h-[60%] text-black flex items-center justify-center">
                                     <IconComponent />
                                 </div>
                             </motion.div>
                         );
                     })}
                 </div>
+
+                {/* Main Text Section */}
+                <motion.div
+                    className="absolute inset-0 flex items-center justify-center px-8 z-20"
+                    style={{
+                        opacity: useTransform(scrollYProgress, [0.65, 0.75], [0, 1]),
+                        pointerEvents: 'none',
+                    }}
+                >
+                    <div className="text-center max-w-7xl">
+                        <motion.p className="text-sm text-black/50 mb-4 font-bold tracking-[0.2em] uppercase">
+                            Here's a fun fact:
+                        </motion.p>
+                        <motion.p className="text-sm text-black/50 mb-12 font-bold tracking-[0.2em] uppercase">
+                            Today, you are the product
+                        </motion.p>
+
+                        <div className="text-4xl md:text-6xl lg:text-[5.5rem] font-black text-black tracking-tight leading-[1.2] text-center">
+                            {/* Line 1: Music */}
+                            <div className="flex items-center justify-center gap-x-4 flex-wrap mb-4">
+                                <span>Your favorite</span>
+                                <span
+                                    ref={el => slotRefs.current[0] = el}
+                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                ></span>
+                                <span>songs.</span>
+                            </div>
+
+                            {/* Line 2: Movie */}
+                            <div className="flex items-center justify-center gap-x-4 flex-wrap mb-4">
+                                <span>That</span>
+                                <span
+                                    ref={el => slotRefs.current[1] = el}
+                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                ></span>
+                                <span>must-see movie.</span>
+                            </div>
+
+                            {/* Line 3: Lock */}
+                            <div className="flex items-center justify-center gap-x-4 flex-wrap mb-4">
+                                <span>Your top</span>
+                                <span
+                                    ref={el => slotRefs.current[2] = el}
+                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                ></span>
+                                <span>interests and</span>
+                            </div>
+
+                            {/* Line 4: Shirt and Ghost */}
+                            <div className="flex items-center justify-center gap-x-4 gap-y-4 flex-wrap">
+                                <span>all your shopping</span>
+                                <span
+                                    ref={el => slotRefs.current[3] = el}
+                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                ></span>
+                                <span
+                                    ref={el => slotRefs.current[4] = el}
+                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                ></span>
+                                <span>habits.</span>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
             </motion.div>
         </section>
     );
