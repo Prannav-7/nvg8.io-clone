@@ -43,11 +43,11 @@ const MusicIcon = () => (
 
 const Hero = () => {
     const featureData = [
-        { id: 'music', label: "MUSIC STREAMING", bg: '#a78bfa', borderRadius: '50%', icon: MusicIcon },
+        { id: 'music', label: "MUSIC STREAMING", bg: '#a78bfa', borderRadius: '1.5rem', icon: MusicIcon },
         { id: 'movie', label: "MOVIES & TV SHOWS", bg: '#16a34a', borderRadius: '1.5rem', icon: MovieIcon },
         { id: 'lock', label: "SECURE & PRIVATE", bg: '#eab308', borderRadius: '1.5rem', icon: LockIcon },
         { id: 'shirt', label: "FASHION & STYLE", bg: '#3b82f6', borderRadius: '1.5rem', icon: TshirtIcon },
-        { id: 'ghost', label: "GAMING REWARDS", bg: '#f97316', borderRadius: '2rem', icon: GhostIcon },
+        { id: 'ghost', label: "GAMING REWARDS", bg: '#f97316', borderRadius: '1.5rem', icon: GhostIcon },
     ];
 
     const [boxPositions, setBoxPositions] = useState([0, 1, 2, 3, 4]);
@@ -65,9 +65,31 @@ const Hero = () => {
 
     const backgroundColor = useTransform(
         scrollYProgress,
-        [0, 0.5, 0.65],
+        [0, 0.4, 0.55],
         ['#000000', '#000000', '#ffffff']
     );
+
+    // Section exit fade
+    const sectionOpacity = useTransform(scrollYProgress, [0.9, 0.98], [1, 0]);
+
+    // Text Opacity Staggering - Sync with fly animation (Phase 4)
+    const introOpacity = useTransform(scrollYProgress, [0.45, 0.48], [0, 1]); // Fun fact
+
+    // Line 1: Music (Icon 0)
+    const opacityL1 = useTransform(scrollYProgress, [0.60, 0.68], [0, 1]);
+    const yL1 = useTransform(scrollYProgress, [0.60, 0.68], [30, 0]);
+
+    // Line 2: Movie (Icon 1)
+    const opacityL2 = useTransform(scrollYProgress, [0.65, 0.73], [0, 1]);
+    const yL2 = useTransform(scrollYProgress, [0.65, 0.73], [30, 0]);
+
+    // Line 3: Lock (Icon 2)
+    const opacityL3 = useTransform(scrollYProgress, [0.70, 0.78], [0, 1]);
+    const yL3 = useTransform(scrollYProgress, [0.70, 0.78], [30, 0]);
+
+    // Line 4: Habits (Icons 3 & 4)
+    const opacityL4 = useTransform(scrollYProgress, [0.75, 0.83], [0, 1]);
+    const yL4 = useTransform(scrollYProgress, [0.75, 0.83], [30, 0]);
 
     // Track scroll behavior
     useEffect(() => {
@@ -90,7 +112,18 @@ const Hero = () => {
         const interval = setInterval(() => {
             setIsFading(true);
             setTimeout(() => {
-                setBoxPositions(prev => [...prev].sort(() => Math.random() - 0.5));
+                setBoxPositions(prev => {
+                    const newPositions = [...prev];
+                    // Pick 2 random positions to swap
+                    const pos1 = Math.floor(Math.random() * 5);
+                    let pos2 = Math.floor(Math.random() * 5);
+                    while (pos2 === pos1) {
+                        pos2 = Math.floor(Math.random() * 5);
+                    }
+                    // Swap only these two positions
+                    [newPositions[pos1], newPositions[pos2]] = [newPositions[pos2], newPositions[pos1]];
+                    return newPositions;
+                });
                 setIsFading(false);
             }, 500);
         }, 3000);
@@ -120,14 +153,14 @@ const Hero = () => {
     }, [hasScrolled]);
 
     return (
-        <section ref={containerRef} className="relative w-full" style={{ height: '600vh' }}>
+        <section ref={containerRef} className="relative w-full" style={{ height: '1200vh', opacity: sectionOpacity }}>
             <motion.div
                 className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden"
                 style={{ backgroundColor }}
             >
                 {/* Initial Content */}
                 <motion.div
-                    className="text-center z-10 px-4 mb-24"
+                    className="text-center z-10 px-4"
                     style={{
                         opacity: useTransform(scrollYProgress, [0, 0.15], [1, 0]),
                         y: useTransform(scrollYProgress, [0, 0.15], [0, -50]),
@@ -163,13 +196,14 @@ const Hero = () => {
                         const phase3End = 0.62;
 
                         // Phase 4: Fly to slots
-                        const phase4Start = 0.65;
-                        const phase4End = 0.9;
+                        const flyOrder = index === 0 ? 0 : index;
+                        const flyDelay = flyOrder * 0.04;
+                        const phase4Start = 0.60 + flyDelay;
+                        const phase4End = phase4Start + 0.10;
 
                         // Starting positions - visible horizontal row at bottom (matching image)
                         const initialPositions = [-600, -300, 0, 300, 600]; // Wide spacing (320px gaps)
 
-                        // Target positions - proper gaps (cards are 280px wide!)
                         // Target positions - proper gaps (cards are 280px wide!)
                         const rowPositions = [-600, -300, 0, 300, 600]; // 300px spacing = 20px gaps
 
@@ -225,9 +259,9 @@ const Hero = () => {
                                 1, // Maintain size
                                 1, // Phase 2 End (Scale 1.0)
                                 1, // Phase 3 Start (Scale 1.0)
-                                0.5, // Phase 3 End (Scale 0.5) -> Matching 160px spacing
+                                0.5, // Phase 3 End (Scale 0.5)
                                 0.5, // Maintain reduced size
-                                0.4 // Final size
+                                0.35 // Final size - increased to match 6rem text height better
                             ]
                         );
 
@@ -261,62 +295,63 @@ const Hero = () => {
                 <motion.div
                     className="absolute inset-0 flex items-center justify-center px-8 z-20"
                     style={{
-                        opacity: useTransform(scrollYProgress, [0.65, 0.75], [0, 1]),
                         pointerEvents: 'none',
                     }}
                 >
                     <div className="text-center max-w-7xl">
-                        <motion.p className="text-sm text-black/50 mb-4 font-bold tracking-[0.2em] uppercase">
-                            Here's a fun fact:
-                        </motion.p>
-                        <motion.p className="text-sm text-black/50 mb-12 font-bold tracking-[0.2em] uppercase">
-                            Today, you are the product
-                        </motion.p>
+                        <motion.div style={{ opacity: introOpacity }}>
+                            <p className="text-sm text-black/50 mb-4 font-bold tracking-[0.2em] uppercase">
+                                Here's a fun fact:
+                            </p>
+                            <p className="text-sm text-black/50 mb-12 font-bold tracking-[0.2em] uppercase">
+                                Today, you are the product
+                            </p>
+                        </motion.div>
 
-                        <div className="text-4xl md:text-6xl lg:text-[5.5rem] font-black text-black tracking-tight leading-[1.2] text-center">
+                        <div className="text-4xl md:text-7xl lg:text-[6rem] font-black text-black tracking-tighter leading-[1.1] text-center flex flex-col items-center">
                             {/* Line 1: Music */}
-                            <div className="flex items-center justify-center gap-x-4 flex-wrap mb-4">
+                            <motion.div style={{ opacity: opacityL1, y: yL1 }} className="flex items-center justify-center gap-x-3 whitespace-nowrap mb-2">
                                 <span>Your favorite</span>
                                 <span
                                     ref={el => slotRefs.current[0] = el}
-                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                    className="w-[100px] h-[60px] inline-block"
                                 ></span>
                                 <span>songs.</span>
-                            </div>
+                            </motion.div>
 
                             {/* Line 2: Movie */}
-                            <div className="flex items-center justify-center gap-x-4 flex-wrap mb-4">
+                            <motion.div style={{ opacity: opacityL2, y: yL2 }} className="flex items-center justify-center gap-x-3 whitespace-nowrap mb-2">
                                 <span>That</span>
                                 <span
                                     ref={el => slotRefs.current[1] = el}
-                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                    className="w-[100px] h-[60px] inline-block"
                                 ></span>
                                 <span>must-see movie.</span>
-                            </div>
+                            </motion.div>
 
                             {/* Line 3: Lock */}
-                            <div className="flex items-center justify-center gap-x-4 flex-wrap mb-4">
+                            <motion.div style={{ opacity: opacityL3, y: yL3 }} className="flex items-center justify-center gap-x-3 whitespace-nowrap mb-2">
                                 <span>Your top</span>
                                 <span
                                     ref={el => slotRefs.current[2] = el}
-                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                    className="w-[100px] h-[60px] inline-block"
                                 ></span>
                                 <span>interests and</span>
-                            </div>
+                            </motion.div>
 
                             {/* Line 4: Shirt and Ghost */}
-                            <div className="flex items-center justify-center gap-x-4 gap-y-4 flex-wrap">
+                            <motion.div style={{ opacity: opacityL4, y: yL4 }} className="flex items-center justify-center gap-x-3 whitespace-nowrap">
                                 <span>all your shopping</span>
                                 <span
                                     ref={el => slotRefs.current[3] = el}
-                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                    className="w-[100px] h-[60px] inline-block"
                                 ></span>
                                 <span
                                     ref={el => slotRefs.current[4] = el}
-                                    className="w-[120px] h-[60px] inline-block" // Expanded gap
+                                    className="w-[100px] h-[60px] inline-block"
                                 ></span>
                                 <span>habits.</span>
-                            </div>
+                            </motion.div>
                         </div>
                     </div>
                 </motion.div>
