@@ -159,7 +159,8 @@ const Hero = () => {
                         const phase2End = 0.52;
 
                         // Phase 3: Gradual size reduction while staying centered
-                        const phase3End = 0.58;
+                        const phase3Start = 0.52;
+                        const phase3End = 0.62;
 
                         // Phase 4: Fly to slots
                         const phase4Start = 0.65;
@@ -169,54 +170,64 @@ const Hero = () => {
                         const initialPositions = [-600, -300, 0, 300, 600]; // Wide spacing (320px gaps)
 
                         // Target positions - proper gaps (cards are 280px wide!)
+                        // Target positions - proper gaps (cards are 280px wide!)
                         const rowPositions = [-600, -300, 0, 300, 600]; // 300px spacing = 20px gaps
+
+                        // Condensed positions - tighten spacing as cards shrink to maintain gaps
+                        const condensedPositions = [-320, -160, 0, 160, 320]; // Keep 20px gap when small
                         const centerPosition = 0; // Center of screen
 
                         // Target Slot Position
                         const targetPos = slotPositions[index] || { x: 0, y: 0 };
 
-                        // X interpolation - smooth movement to horizontal row (NOT single center point)
+                        // X interpolation - strictly strictly maintain 20px gap
+                        // Gap Math: Spacing = CardWidth + 20
+                        // Scale 1.0 (280px) -> Spacing 300px
+                        // Scale 0.5 (140px) -> Spacing 160px
                         const boxX = useTransform(
                             scrollYProgress,
-                            [0, phase1Start, phase1End, phase2End, phase3End, phase4Start, phase4End],
+                            [0, phase1Start, phase1End, phase2End, phase3Start, phase3End, phase4Start, phase4End],
                             [
-                                initialPositions[positionIndex], // Start in visible horizontal row
-                                initialPositions[positionIndex], // Wait for turn
-                                rowPositions[positionIndex], // Move to tighter row position (NOT center)
-                                rowPositions[positionIndex], // Stay in row
-                                rowPositions[positionIndex], // Remain in row during size reduction
-                                rowPositions[positionIndex], // Still in row
-                                targetPos.x // Finally fly to slot
+                                initialPositions[positionIndex],
+                                initialPositions[positionIndex],
+                                rowPositions[positionIndex], // Spacing 300
+                                rowPositions[positionIndex], // Spacing 300
+                                rowPositions[positionIndex], // Spacing 300 (Start Shrink)
+                                condensedPositions[positionIndex], // Spacing 160 (End Shrink)
+                                condensedPositions[positionIndex],
+                                targetPos.x
                             ]
                         );
 
                         // Y interpolation - stay at center during size reduction (not down)
                         const boxY = useTransform(
                             scrollYProgress,
-                            [0, phase1Start, phase1End, phase2Start, phase2End, phase3End, phase4Start, phase4End],
+                            [0, phase1Start, phase1End, phase2Start, phase2End, phase3Start, phase3End, phase4Start, phase4End],
                             [
-                                230, // Start at bottom (visible like in image)
-                                230, // Wait for turn
-                                0, // Move up to center
-                                0, // Hold at center
-                                0, // STAY at center (not moving down)
-                                0, // STAY at center during size reduction
-                                0, // Maintain center position
-                                targetPos.y // Fly to slot
+                                230, // Start at bottom
+                                230,
+                                0, // Center
+                                0, // Hold
+                                0, // Phase 2 end
+                                0, // Phase 3 start
+                                0, // Stay centered during shrink
+                                0, // Hold
+                                targetPos.y
                             ]
                         );
 
-                        // Size interpolation - gradual smooth reduction
+                        // Size interpolation - gradual smooth reduction to 0.5
                         const boxScale = useTransform(
                             scrollYProgress,
-                            [0, phase1End, phase2End, phase3End, phase4Start, phase4End],
+                            [0, phase1End, phase2End, phase3Start, phase3End, phase4Start, phase4End],
                             [
-                                1, // Full size at start (280px - matching image)
-                                1, // Maintain size when reaching center
-                                0.92, // Slight reduction after moving back
-                                0.72, // Gradually reduce size
-                                0.72, // Maintain reduced size
-                                0.4 // Final size in slot
+                                1, // Full size at start
+                                1, // Maintain size
+                                1, // Phase 2 End (Scale 1.0)
+                                1, // Phase 3 Start (Scale 1.0)
+                                0.5, // Phase 3 End (Scale 0.5) -> Matching 160px spacing
+                                0.5, // Maintain reduced size
+                                0.4 // Final size
                             ]
                         );
 
