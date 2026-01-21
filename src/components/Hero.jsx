@@ -120,7 +120,7 @@ const Hero = () => {
     }, [hasScrolled]);
 
     return (
-        <section ref={containerRef} className="relative w-full" style={{ height: '800vh' }}>
+        <section ref={containerRef} className="relative w-full" style={{ height: '600vh' }}>
             <motion.div
                 className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden"
                 style={{ backgroundColor }}
@@ -147,44 +147,77 @@ const Hero = () => {
                         const positionIndex = boxPositions.indexOf(index);
                         const IconComponent = item.icon;
 
-                        // Animation Phases
-                        const phase1End = 0.25; // Convergence
-                        const phase2End = 0.6; // Step Back (Shrink & Down)
-                        const phase3Start = 0.65;
-                        const phase3End = 0.9; // Fly to slots
+                        // Animation Phases - Sequential card movement
+                        const cardDelay = positionIndex * 0.04; // Faster sequential delay for smoother animation
 
-                        // Base positions - tight consistent spacing
-                        const horizontalPositions = [-640, -320, 0, 320, 640];
-                        const widePositions = [-630, -320, 0, 320, 640]; // Same as horizontal for consistent gap
+                        // Phase 1: Move from initial position to center (one by one)
+                        const phase1Start = 0.05 + cardDelay;
+                        const phase1End = 0.22 + cardDelay;
+
+                        // Phase 2: All cards gather at center, then move backward together
+                        const phase2Start = 0.45;
+                        const phase2End = 0.52;
+
+                        // Phase 3: Gradual size reduction while staying centered
+                        const phase3End = 0.58;
+
+                        // Phase 4: Fly to slots
+                        const phase4Start = 0.65;
+                        const phase4End = 0.9;
+
+                        // Starting positions - visible horizontal row at bottom (matching image)
+                        const initialPositions = [-600, -300, 0, 300, 600]; // Wide spacing (320px gaps)
+
+                        // Target positions - proper gaps (cards are 280px wide!)
+                        const rowPositions = [-600, -300, 0, 300, 600]; // 300px spacing = 20px gaps
+                        const centerPosition = 0; // Center of screen
 
                         // Target Slot Position
                         const targetPos = slotPositions[index] || { x: 0, y: 0 };
 
-                        // X interpolation
+                        // X interpolation - smooth movement to horizontal row (NOT single center point)
                         const boxX = useTransform(
                             scrollYProgress,
-                            [0, phase1End, phase2End, phase3Start, phase3End],
+                            [0, phase1Start, phase1End, phase2End, phase3End, phase4Start, phase4End],
                             [
-                                widePositions[positionIndex] || 0,
-                                horizontalPositions[positionIndex] || 0,
-                                horizontalPositions[positionIndex] || 0,
-                                horizontalPositions[positionIndex] || 0,
-                                targetPos.x
+                                initialPositions[positionIndex], // Start in visible horizontal row
+                                initialPositions[positionIndex], // Wait for turn
+                                rowPositions[positionIndex], // Move to tighter row position (NOT center)
+                                rowPositions[positionIndex], // Stay in row
+                                rowPositions[positionIndex], // Remain in row during size reduction
+                                rowPositions[positionIndex], // Still in row
+                                targetPos.x // Finally fly to slot
                             ]
                         );
 
-                        // Y interpolation (Rise from bottom -> Equal Middle -> Step Back -> Slot)
+                        // Y interpolation - stay at center during size reduction (not down)
                         const boxY = useTransform(
                             scrollYProgress,
-                            [0, phase1End, phase2End, phase3Start, phase3End],
-                            [280, 0, 120, 120, targetPos.y]
+                            [0, phase1Start, phase1End, phase2Start, phase2End, phase3End, phase4Start, phase4End],
+                            [
+                                230, // Start at bottom (visible like in image)
+                                230, // Wait for turn
+                                0, // Move up to center
+                                0, // Hold at center
+                                0, // STAY at center (not moving down)
+                                0, // STAY at center during size reduction
+                                0, // Maintain center position
+                                targetPos.y // Fly to slot
+                            ]
                         );
 
-                        // Size interpolation (Stay same size until flying to text)
+                        // Size interpolation - gradual smooth reduction
                         const boxScale = useTransform(
                             scrollYProgress,
-                            [0, phase1End, phase2End, phase3Start, phase3End],
-                            [1, 1, 1, 1, 0.4] // Constant size until text phase
+                            [0, phase1End, phase2End, phase3End, phase4Start, phase4End],
+                            [
+                                1, // Full size at start (280px - matching image)
+                                1, // Maintain size when reaching center
+                                0.92, // Slight reduction after moving back
+                                0.72, // Gradually reduce size
+                                0.72, // Maintain reduced size
+                                0.4 // Final size in slot
+                            ]
                         );
 
                         return (
