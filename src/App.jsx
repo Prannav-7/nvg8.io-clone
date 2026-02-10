@@ -5,10 +5,13 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import ScrollStory from './components/ScrollStory';
-
-import About from './components/About';
-import Contact from './components/Contact';
+import LandingShapes from './components/LandingShapes';
+import PowerfulFeatures from './components/PowerfulFeatures';
+import ProjectSection from './components/ProjectSection';
+import NavigatorsSection from './components/NavigatorsSection';
+import RewardsSection from './components/RewardsSection';
+import FAQSection from './components/FAQSection';
+import Footer from './components/Footer';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -40,8 +43,13 @@ function App() {
         <div className="App">
             <Navbar />
             <Hero />
-            <ScrollStory />
-
+            <LandingShapes />
+            <PowerfulFeatures />
+            <ProjectSection />
+            <NavigatorsSection />
+            <RewardsSection />
+            <FAQSection />
+            <Footer />
         </div>
     );
 }

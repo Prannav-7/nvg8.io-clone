@@ -40,8 +40,8 @@ const Navbar = () => {
                         transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
                         className="flex items-center gap-3"
                     >
-                        <img src={logo} alt="Navigatz Logo" className="w-9 h-9 rounded-md" />
-                        <span className="text-white text-xl font-bold">Navigatz</span>
+                        <img src={logo} alt="Navigate Logo" className="w-9 h-9 rounded-md" />
+                        <span className="text-white text-xl font-bold">Navigate</span>
                     </motion.div>
 
                     {/* Nav Links */}

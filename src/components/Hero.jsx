@@ -43,11 +43,11 @@ const MusicIcon = () => (
 
 const Hero = () => {
     const featureData = [
-        { id: 'music', label: "MUSIC STREAMING", bg: '#a78bfa', borderRadius: '1.5rem', icon: MusicIcon },
-        { id: 'movie', label: "MOVIES & TV SHOWS", bg: '#16a34a', borderRadius: '1.5rem', icon: MovieIcon },
-        { id: 'lock', label: "SECURE & PRIVATE", bg: '#eab308', borderRadius: '1.5rem', icon: LockIcon },
-        { id: 'shirt', label: "FASHION & STYLE", bg: '#3b82f6', borderRadius: '1.5rem', icon: TshirtIcon },
-        { id: 'ghost', label: "GAMING REWARDS", bg: '#f97316', borderRadius: '1.5rem', icon: GhostIcon },
+        { id: 'movie', label: "MOVIES & TV SHOWS", bg: '#16a34a', borderRadius: '1.5rem', width: 240, height: 240, clipPath: null, icon: MovieIcon },
+        { id: 'lock', label: "SECURE & PRIVATE", bg: '#eab308', borderRadius: '1.5rem', width: 240, height: 240, clipPath: null, icon: LockIcon },
+        { id: 'shirt', label: "FASHION & STYLE", bg: '#3b82f6', borderRadius: '50%', width: 240, height: 240, clipPath: null, icon: TshirtIcon },
+        { id: 'ghost', label: "GAMING REWARDS", bg: '#f97316', borderRadius: '0', width: 240, height: 240, clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)', icon: GhostIcon },
+        { id: 'music', label: "MUSIC STREAMING", bg: '#a78bfa', borderRadius: '50%', width: 240, height: 240, clipPath: null, icon: MusicIcon },
     ];
 
     const [boxPositions, setBoxPositions] = useState([0, 1, 2, 3, 4]);
@@ -202,13 +202,13 @@ const Hero = () => {
                         const phase4End = phase4Start + 0.10;
 
                         // Starting positions - visible horizontal row at bottom (matching image)
-                        const initialPositions = [-600, -300, 0, 300, 600]; // Wide spacing (320px gaps)
+                        const initialPositions = [-520, -260, 0, 260, 520]; // Tighter spacing for 240px cards
 
-                        // Target positions - proper gaps (cards are 280px wide!)
-                        const rowPositions = [-600, -300, 0, 300, 600]; // 300px spacing = 20px gaps
+                        // Target positions - proper gaps (cards are 240px wide!)
+                        const rowPositions = [-520, -260, 0, 260, 520]; // 260px spacing = 20px gaps
 
                         // Condensed positions - tighten spacing as cards shrink to maintain gaps
-                        const condensedPositions = [-320, -160, 0, 160, 320]; // Keep 20px gap when small
+                        const condensedPositions = [-180, -90, 0, 90, 180]; // Keep 20px gap when small
                         const centerPosition = 0; // Center of screen
 
                         // Target Slot Position
@@ -273,10 +273,11 @@ const Hero = () => {
                                     x: boxX,
                                     y: boxY,
                                     scale: boxScale,
-                                    width: 280,
-                                    height: 280,
+                                    width: item.width,
+                                    height: item.height,
                                     background: item.bg,
                                     borderRadius: item.borderRadius,
+                                    clipPath: item.clipPath,
                                     willChange: 'transform',
                                 }}
                                 animate={{

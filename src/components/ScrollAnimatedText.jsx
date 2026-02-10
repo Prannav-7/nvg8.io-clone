@@ -10,6 +10,8 @@ const ScrollAnimatedText = ({
   keywords = [],
   bgColor = '#141414',
   highlightBgColor = '60, 60, 60',
+  showIcon = false,
+  iconColor = '#c6fe69',
   keywordColors = {
     vibrant: '#7a78ff',
     living: '#fe6d38',
@@ -27,6 +29,7 @@ const ScrollAnimatedText = ({
 }) => {
   const containerRef = useRef(null);
   const animeTextRef = useRef(null);
+  const iconRef = useRef(null);
 
   useEffect(() => {
     if (!animeTextRef.current) return;
@@ -36,30 +39,62 @@ const ScrollAnimatedText = ({
     // Process each paragraph and split into words
     animeTextParagraphs.forEach((paragraph) => {
       const text = paragraph.textContent;
-      const words = text.split(/\s+/);
+      const initialWords = text.split(/\s+/).filter(w => w.trim());
       paragraph.innerHTML = '';
 
-      words.forEach((word) => {
-        if (word.trim()) {
-          const wordContainer = document.createElement('div');
-          wordContainer.className = 'word';
+      let i = 0;
+      while (i < initialWords.length) {
+        let matchedKeyword = null;
+        let wordsInKeyword = 1;
 
-          const wordText = document.createElement('span');
-          wordText.textContent = word;
+        // Sort keywords by length (longest first) to match phrases correctly
+        const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
 
-          const normalizedWord = word.toLowerCase().replace(/[.,!?;:"]/g, '');
-          if (keywords.includes(normalizedWord)) {
-            wordContainer.classList.add('keyword-wrapper');
-            wordText.classList.add('keyword', normalizedWord);
+        for (const kw of sortedKeywords) {
+          const kwWords = kw.split(/\s+/);
+          const potentialMatch = initialWords.slice(i, i + kwWords.length)
+            .map(w => w.toLowerCase().replace(/[.,!?;:"]/g, ''))
+            .join(' ');
+
+          if (potentialMatch === kw.toLowerCase()) {
+            matchedKeyword = kw;
+            wordsInKeyword = kwWords.length;
+            break;
           }
-
-          wordContainer.appendChild(wordText);
-          paragraph.appendChild(wordContainer);
-
-          // Add a space text node after each word for proper spacing
-          paragraph.appendChild(document.createTextNode(' '));
         }
-      });
+
+        const wordGroup = initialWords.slice(i, i + wordsInKeyword).join(' ');
+        const wordContainer = document.createElement('div');
+        wordContainer.className = 'word';
+
+        const wordText = document.createElement('span');
+
+        // Special case for Navigate brand with logo
+        if (matchedKeyword && matchedKeyword.toLowerCase() === 'navigate') {
+          wordText.innerHTML = `
+            <span class="brand-badge">
+              <svg viewBox="0 0 24 24" fill="none" style="width: 1.2em; height: 1.2em; margin-right: 0.3em; display: inline-block; vertical-align: middle;">
+                <path d="M13 10V3L4 14H11V21L20 10H13Z" fill="currentColor"/>
+              </svg>
+              ${wordGroup}
+            </span>
+          `;
+        } else {
+          wordText.textContent = wordGroup;
+        }
+
+        if (matchedKeyword) {
+          const normalizedKW = matchedKeyword.toLowerCase().replace(/\s+/g, '-');
+          wordContainer.classList.add('keyword-wrapper');
+          wordText.classList.add('keyword', normalizedKW);
+        }
+
+        wordContainer.appendChild(wordText);
+        paragraph.appendChild(wordContainer);
+        paragraph.appendChild(document.createTextNode(' '));
+
+        i += wordsInKeyword;
+      }
     });
 
     // Create scroll trigger animation
@@ -73,6 +108,22 @@ const ScrollAnimatedText = ({
         const progress = self.progress;
         const words = Array.from(animeTextRef.current.querySelectorAll('.word'));
         const totalWords = words.length;
+
+        // Fade out icon during reverse animation (when text disappears)
+        if (iconRef.current) {
+          if (progress < 0.1) {
+            // Fade in icon at the very beginning
+            const fadeInProgress = progress / 0.1;
+            iconRef.current.style.opacity = fadeInProgress;
+          } else if (progress <= 0.7) {
+            // Keep icon fully visible during text reveal phase
+            iconRef.current.style.opacity = 1;
+          } else {
+            // Fade out icon during reverse phase (0.7 to 1.0)
+            const reverseProgress = (progress - 0.7) / 0.3;
+            iconRef.current.style.opacity = 1 - reverseProgress;
+          }
+        }
 
         words.forEach((word, index) => {
           const wordText = word.querySelector('span');
@@ -169,25 +220,46 @@ const ScrollAnimatedText = ({
   return (
     <section
       ref={containerRef}
-      className="anime-text-container relative w-full h-screen overflow-hidden"
+      className="anime-text-container relative w-full h-screen overflow-hidden pt-32 px-8"
       style={{
-        backgroundColor: bgColor,
-        padding: '2rem'
+        backgroundColor: bgColor
       }}
     >
-      <div className="copy-container w-full h-full flex justify-center items-center text-center border-[0.15rem] border-dashed border-[rgb(60,60,60)] rounded-[2rem]">
-        <div
-          ref={animeTextRef}
-          className="anime-text w-[60%] max-w-4xl"
-        >
-          {paragraphs.map((text, index) => (
-            <p
-              key={index}
-              className="text-white text-center mb-8 text-2xl md:text-4xl font-black leading-tight"
+      <div className="copy-container w-full h-full flex justify-center items-center">
+        <div className="flex items-start gap-4 md:gap-6 w-full max-w-4xl px-6 md:px-12">
+          {/* Icon */}
+          {showIcon && (
+            <div
+              ref={iconRef}
+              className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl flex items-center justify-center mt-1.5 transition-opacity duration-300"
+              style={{ backgroundColor: iconColor }}
             >
-              {text}
-            </p>
-          ))}
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-6 h-6 md:w-8 md:h-8"
+                style={{ color: '#141414' }}
+              >
+                <path d="M12 2L4 12L12 22L20 12L12 2Z" />
+                <circle cx="12" cy="12" r="3" fill="white" fillOpacity="0.3" />
+              </svg>
+            </div>
+          )}
+
+          {/* Text Content */}
+          <div
+            ref={animeTextRef}
+            className="anime-text flex-1"
+          >
+            {paragraphs.map((text, index) => (
+              <p
+                key={index}
+                className="text-white text-left text-xl md:text-3xl lg:text-4xl font-black leading-[1.3] tracking-tighter mb-8 last:mb-0"
+              >
+                {text}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -195,15 +267,15 @@ const ScrollAnimatedText = ({
         .anime-text .word {
           display: inline-block;
           position: relative;
-          margin-right: 0.5rem;
-          margin-bottom: 0.4rem;
-          padding: 0.2rem 0.4rem;
+          margin-right: 0.4rem;
+          margin-bottom: 0.2rem;
+          padding: 0.1rem 0.2rem;
           border-radius: 2rem;
           will-change: background-color, opacity;
         }
 
         .anime-text .word.keyword-wrapper {
-          margin: 0 0.6rem 0.4rem 0.3rem;
+          margin: 0 0.5rem 0.2rem 0.2rem;
         }
 
         .anime-text .word span {
@@ -226,58 +298,28 @@ const ScrollAnimatedText = ({
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: calc(100% + 1.2rem);
-          height: calc(100% + 0.6rem);
+          width: calc(100% + 1rem);
+          height: calc(100% + 0.4rem);
           background-color: #fff;
           border-radius: 2rem;
           z-index: -1;
         }
 
-        .anime-text .word span.keyword.vibrant::before,
-        .anime-text .word span.keyword.motion::before,
-        .anime-text .word span.keyword.shape::before,
-        .anime-text .word span.keyword.interactive::before {
-          background-color: ${keywordColors.vibrant || '#7a78ff'};
-        }
+        ${Object.entries(keywordColors).map(([keyword, color]) => {
+        const className = keyword.toLowerCase().replace(/\s+/g, '-');
+        return `
+            .anime-text .word span.keyword.${className}::before {
+              background-color: ${color};
+            }
+          `;
+      }).join('')}
 
-        .anime-text .word span.keyword.living::before,
-        .anime-text .word span.keyword.expression::before,
-        .anime-text .word span.keyword.storytelling::before,
-        .anime-text .word span.keyword.creative::before {
-          background-color: ${keywordColors.living || '#fe6d38'};
-        }
-
-        .anime-text .word span.keyword.clarity::before,
-        .anime-text .word span.keyword.intuitive::before,
-        .anime-text .word span.keyword.vision::before,
-        .anime-text .word span.keyword.bold::before {
-          background-color: ${keywordColors.clarity || '#c6fe69'};
-        }
-
-        .anime-text .word span.keyword.data::before {
-          background-color: ${keywordColors.data || '#eab308'};
-        }
-
-        .anime-text .word span.keyword.interests::before,
-        .anime-text .word span.keyword.value::before {
-          background-color: ${keywordColors.interests || '#f97316'};
-        }
-
-        .anime-text .word span.keyword.creativity::before {
-          background-color: ${keywordColors.creativity || '#16a34a'};
-        }
-
-        .anime-text .word span.keyword.personalized::before {
-          background-color: ${keywordColors.personalized || '#a78bfa'};
-        }
-
-        .anime-text .word span.keyword.expressive::before {
-          background-color: ${keywordColors.expressive || '#eab308'};
-        }
-
-        .anime-text .word,
-        .anime-text .word span {
+        .anime-text .word {
           opacity: 0;
+        }
+        
+        .anime-text .word span {
+          opacity: 1;
         }
 
         @media (max-width: 1000px) {
