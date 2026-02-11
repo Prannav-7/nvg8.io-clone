@@ -28,7 +28,7 @@ const PowerfulFeatures = () => {
             <section className="relative w-full h-screen overflow-hidden" style={{ padding: '2rem' }}>
                 <div
                     className="copy-container w-full h-full flex justify-center items-center text-center rounded-[2rem]"
-                    style={{ background: '#7a78ff' }}
+                    style={{ background: '#7a78ff', position: 'relative' }}
                 >
                     <h1 className="w-[70%] text-[#141414] text-5xl md:text-7xl lg:text-8xl font-black leading-none">
                         Built for users who shape the future of data.

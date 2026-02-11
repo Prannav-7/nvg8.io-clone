@@ -5,6 +5,8 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import ScrollStory from './components/ScrollStory';
+import DiagonalShapes from './components/DiagonalShapes';
 import LandingShapes from './components/LandingShapes';
 import PowerfulFeatures from './components/PowerfulFeatures';
 import ProjectSection from './components/ProjectSection';
@@ -40,9 +42,11 @@ function App() {
     }, []);
 
     return (
-        <div className="App">
+        <div className="App relative" style={{ position: 'relative' }}>
             <Navbar />
             <Hero />
+            <ScrollStory />
+            <DiagonalShapes />
             <LandingShapes />
             <PowerfulFeatures />
             <ProjectSection />

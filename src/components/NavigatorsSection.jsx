@@ -52,6 +52,7 @@ const NavigatorsSection = () => {
             id="navigators"
             ref={sectionRef}
             className="relative w-full bg-black py-24 md:py-32 overflow-hidden"
+            style={{ position: 'relative' }}
         >
             {/* Background gradient effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -23,6 +23,7 @@ const About = () => {
             id="about"
             ref={sectionRef}
             className="min-h-screen py-20 px-6 flex items-center relative overflow-hidden"
+            style={{ position: 'relative' }}
         >
             {/* Parallax background elements */}
             <motion.div

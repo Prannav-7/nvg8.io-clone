@@ -40,6 +40,7 @@ const Contact = () => {
             id="contact"
             ref={sectionRef}
             className="min-h-screen py-20 px-6 flex items-center relative overflow-hidden"
+            style={{ position: 'relative' }}
         >
             {/* Background decoration */}
             <div className="absolute inset-0 -z-10">

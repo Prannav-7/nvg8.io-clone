@@ -79,7 +79,7 @@ const AnimatedContent = () => {
     const duplicatedContent = [...contentData, ...contentData, ...contentData];
 
     return (
-        <section className="relative bg-black py-24 overflow-hidden">
+        <section className="relative bg-black py-24 overflow-hidden" style={{ position: 'relative' }}>
             {/* Top Row - Moving Right */}
             <div className="relative mb-12 overflow-hidden">
                 <motion.div

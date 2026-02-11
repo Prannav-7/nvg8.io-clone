@@ -29,6 +29,7 @@ const ProjectSection = () => {
         <section
             id="project"
             className="relative w-full bg-gradient-to-b from-black to-gray-900 py-24 md:py-32 overflow-hidden"
+            style={{ position: 'relative' }}
         >
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

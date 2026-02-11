@@ -16,6 +16,7 @@ const RewardsSection = () => {
         <section
             id="rewards"
             className="relative w-full bg-white py-24 md:py-32 overflow-hidden"
+            style={{ position: 'relative' }}
         >
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-5">

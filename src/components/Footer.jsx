@@ -47,8 +47,8 @@ const Footer = () => {
     ];
 
     return (
-        <footer className="relative w-full bg-black border-t border-gray-800 py-16 md:py-20">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <footer className="relative w-full bg-black border-t border-gray-800 py-16 md:py-20" style={{ position: 'relative' }}>
+            <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
                 {/* Main CTA Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}

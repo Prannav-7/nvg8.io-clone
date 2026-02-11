@@ -34,6 +34,11 @@ const ScrollAnimatedText = ({
   useEffect(() => {
     if (!animeTextRef.current) return;
 
+    // Set initial icon opacity to 0
+    if (iconRef.current) {
+      iconRef.current.style.opacity = 0;
+    }
+
     const animeTextParagraphs = animeTextRef.current.querySelectorAll('p');
 
     // Process each paragraph and split into words
@@ -222,7 +227,8 @@ const ScrollAnimatedText = ({
       ref={containerRef}
       className="anime-text-container relative w-full h-screen overflow-hidden pt-32 px-8"
       style={{
-        backgroundColor: bgColor
+        backgroundColor: bgColor,
+        position: 'relative'
       }}
     >
       <div className="copy-container w-full h-full flex justify-center items-center">
@@ -263,7 +269,7 @@ const ScrollAnimatedText = ({
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .anime-text .word {
           display: inline-block;
           position: relative;
