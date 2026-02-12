@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const MovieIcon = () => (
     <svg viewBox="0 0 100 100" fill="currentColor">
@@ -58,6 +62,12 @@ const Hero = () => {
     const slotRefs = useRef([]);
     const [slotPositions, setSlotPositions] = useState([]);
 
+    // Frame Animation Refs
+    const canvasRef = useRef(null);
+    const framesRef = useRef([]);
+    const frameCount = 97; // 189 - 93 + 1
+    const startFrame = 93;
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end start"]
@@ -70,26 +80,30 @@ const Hero = () => {
     );
 
     // Section exit fade
-    const sectionOpacity = useTransform(scrollYProgress, [0.9, 0.98], [1, 0]);
+    const sectionOpacity = useTransform(scrollYProgress, [0.95, 0.98], [1, 0]);
+
+    // Text & Icons fade out when frames start
+    const contentOpacity = useTransform(scrollYProgress, [0.80, 0.85], [1, 0]);
+    const canvasOpacity = useTransform(scrollYProgress, [0.81, 0.86, 0.93, 0.98], [0, 1, 1, 0]);
 
     // Text Opacity Staggering - Sync with fly animation (Phase 4)
     const introOpacity = useTransform(scrollYProgress, [0.45, 0.48], [0, 1]); // Fun fact
 
     // Line 1: Music (Icon 0)
-    const opacityL1 = useTransform(scrollYProgress, [0.60, 0.68], [0, 1]);
-    const yL1 = useTransform(scrollYProgress, [0.60, 0.68], [30, 0]);
+    const opacityL1 = useTransform(scrollYProgress, [0.60, 0.66], [0, 1]);
+    const yL1 = useTransform(scrollYProgress, [0.60, 0.66], [30, 0]);
 
     // Line 2: Movie (Icon 1)
-    const opacityL2 = useTransform(scrollYProgress, [0.65, 0.73], [0, 1]);
-    const yL2 = useTransform(scrollYProgress, [0.65, 0.73], [30, 0]);
+    const opacityL2 = useTransform(scrollYProgress, [0.64, 0.70], [0, 1]);
+    const yL2 = useTransform(scrollYProgress, [0.64, 0.70], [30, 0]);
 
     // Line 3: Lock (Icon 2)
-    const opacityL3 = useTransform(scrollYProgress, [0.70, 0.78], [0, 1]);
-    const yL3 = useTransform(scrollYProgress, [0.70, 0.78], [30, 0]);
+    const opacityL3 = useTransform(scrollYProgress, [0.68, 0.74], [0, 1]);
+    const yL3 = useTransform(scrollYProgress, [0.68, 0.74], [30, 0]);
 
     // Line 4: Habits (Icons 3 & 4)
-    const opacityL4 = useTransform(scrollYProgress, [0.75, 0.83], [0, 1]);
-    const yL4 = useTransform(scrollYProgress, [0.75, 0.83], [30, 0]);
+    const opacityL4 = useTransform(scrollYProgress, [0.72, 0.78], [0, 1]);
+    const yL4 = useTransform(scrollYProgress, [0.72, 0.78], [30, 0]);
 
     // Track scroll behavior
     useEffect(() => {
@@ -114,13 +128,11 @@ const Hero = () => {
             setTimeout(() => {
                 setBoxPositions(prev => {
                     const newPositions = [...prev];
-                    // Pick 2 random positions to swap
                     const pos1 = Math.floor(Math.random() * 5);
                     let pos2 = Math.floor(Math.random() * 5);
                     while (pos2 === pos1) {
                         pos2 = Math.floor(Math.random() * 5);
                     }
-                    // Swap only these two positions
                     [newPositions[pos1], newPositions[pos2]] = [newPositions[pos2], newPositions[pos1]];
                     return newPositions;
                 });
@@ -130,6 +142,74 @@ const Hero = () => {
 
         return () => clearInterval(interval);
     }, [hasScrolled]);
+
+    // Preload Frames
+    useEffect(() => {
+        const loadFrames = async () => {
+            const framePromises = [];
+            for (let i = 0; i < frameCount; i++) {
+                const frameNumber = startFrame + i;
+                const img = new Image();
+                img.src = `/animation-image/frame_${String(frameNumber).padStart(4, '0')}.png`;
+                framePromises.push(
+                    new Promise((resolve) => {
+                        img.onload = () => resolve(img);
+                        img.onerror = () => resolve(null);
+                    })
+                );
+            }
+            framesRef.current = await Promise.all(framePromises);
+        };
+        loadFrames();
+    }, []);
+
+    // Canvas GSAP Animation
+    useEffect(() => {
+        const renderFrame = (index) => {
+            const canvas = canvasRef.current;
+            const img = framesRef.current[index];
+            if (!canvas || !img || !img.complete) return;
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+
+        const ctx = gsap.context(() => {
+            ScrollTrigger.create({
+                trigger: containerRef.current,
+                start: 'top top',
+                end: 'bottom bottom',
+                scrub: true,
+                onUpdate: (self) => {
+                    // Start animation at 82% scroll, after content is fully in place
+                    const phaseStart = 0.82;
+                    const phaseEnd = 0.98;
+
+                    if (self.progress < phaseStart) {
+                        const canvas = canvasRef.current;
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                        return;
+                    }
+
+                    if (self.progress > phaseEnd) return;
+
+                    const relativeProgress = (self.progress - phaseStart) / (phaseEnd - phaseStart);
+                    const frameIndex = Math.floor(relativeProgress * (frameCount - 1));
+                    if (framesRef.current.length > 0) {
+                        renderFrame(frameIndex);
+                    }
+                }
+            });
+        }, containerRef);
+
+        return () => ctx.revert();
+    }, []);
 
     // Measure slot positions
     useEffect(() => {
@@ -158,6 +238,22 @@ const Hero = () => {
                 className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden"
                 style={{ backgroundColor, opacity: sectionOpacity }}
             >
+                {/* Frame Animation Canvas Layer */}
+                <motion.div
+                    className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+                    style={{ opacity: canvasOpacity }}
+                >
+                    <canvas
+                        ref={canvasRef}
+                        className="w-full h-full object-contain"
+                        style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain'
+                        }}
+                    />
+                </motion.div>
+
                 {/* Initial Content */}
                 <motion.div
                     className="text-center z-10 px-4"
@@ -175,93 +271,73 @@ const Hero = () => {
                 </motion.div>
 
                 {/* Icons Layer */}
-                <div className="icon-group absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <motion.div
+                    className="icon-group absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+                    style={{ opacity: contentOpacity }}
+                >
                     {featureData.map((item, index) => {
                         const positionIndex = boxPositions.indexOf(index);
                         const IconComponent = item.icon;
 
-                        // Animation Phases - Sequential card movement
-                        const cardDelay = positionIndex * 0.04; // Faster sequential delay for smoother animation
-
-                        // Phase 1: Move from initial position to center (one by one)
+                        const cardDelay = positionIndex * 0.04;
                         const phase1Start = 0.05 + cardDelay;
                         const phase1End = 0.22 + cardDelay;
-
-                        // Phase 2: All cards gather at center, then move backward together
                         const phase2Start = 0.45;
                         const phase2End = 0.52;
-
-                        // Phase 3: Gradual size reduction while staying centered
                         const phase3Start = 0.52;
                         const phase3End = 0.62;
-
-                        // Phase 4: Fly to slots
                         const flyOrder = index === 0 ? 0 : index;
-                        const flyDelay = flyOrder * 0.04;
+                        const flyDelay = flyOrder * 0.03;
                         const phase4Start = 0.60 + flyDelay;
-                        const phase4End = phase4Start + 0.10;
+                        const phase4End = phase4Start + 0.08;
 
-                        // Starting positions - visible horizontal row at bottom (matching image)
-                        const initialPositions = [-520, -260, 0, 260, 520]; // Tighter spacing for 240px cards
-
-                        // Target positions - proper gaps (cards are 240px wide!)
-                        const rowPositions = [-520, -260, 0, 260, 520]; // 260px spacing = 20px gaps
-
-                        // Condensed positions - tighten spacing as cards shrink to maintain gaps
-                        const condensedPositions = [-180, -90, 0, 90, 180]; // Keep 20px gap when small
-                        const centerPosition = 0; // Center of screen
-
-                        // Target Slot Position
+                        const initialPositions = [-520, -260, 0, 260, 520];
+                        const rowPositions = [-520, -260, 0, 260, 520];
+                        const condensedPositions = [-180, -90, 0, 90, 180];
                         const targetPos = slotPositions[index] || { x: 0, y: 0 };
 
-                        // X interpolation - strictly strictly maintain 20px gap
-                        // Gap Math: Spacing = CardWidth + 20
-                        // Scale 1.0 (280px) -> Spacing 300px
-                        // Scale 0.5 (140px) -> Spacing 160px
                         const boxX = useTransform(
                             scrollYProgress,
                             [0, phase1Start, phase1End, phase2End, phase3Start, phase3End, phase4Start, phase4End],
                             [
                                 initialPositions[positionIndex],
                                 initialPositions[positionIndex],
-                                rowPositions[positionIndex], // Spacing 300
-                                rowPositions[positionIndex], // Spacing 300
-                                rowPositions[positionIndex], // Spacing 300 (Start Shrink)
-                                condensedPositions[positionIndex], // Spacing 160 (End Shrink)
+                                rowPositions[positionIndex],
+                                rowPositions[positionIndex],
+                                rowPositions[positionIndex],
+                                condensedPositions[positionIndex],
                                 condensedPositions[positionIndex],
                                 targetPos.x
                             ]
                         );
 
-                        // Y interpolation - stay at center during size reduction (not down)
                         const boxY = useTransform(
                             scrollYProgress,
                             [0, phase1Start, phase1End, phase2Start, phase2End, phase3Start, phase3End, phase4Start, phase4End],
                             [
-                                230, // Start at bottom
                                 230,
-                                0, // Center
-                                0, // Hold
-                                0, // Phase 2 end
-                                0, // Phase 3 start
-                                0, // Stay centered during shrink
-                                0, // Hold
+                                230,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
                                 targetPos.y
                             ]
                         );
 
-                        // Size interpolation - gradual smooth reduction to 0.5
                         const boxScale = useTransform(
                             scrollYProgress,
                             [0, phase1End, phase2End, phase3Start, phase3End, phase4Start, phase4End],
                             [
-                                1, // Full size at start
-                                1, // Maintain size
-                                1, // Phase 2 End (Scale 1.0)
-                                1, // Phase 3 Start (Scale 1.0)
-                                0.5, // Phase 3 End (Scale 0.5)
-                                0.5, // Maintain reduced size
-                                0.35 // Final size - increased to match 6rem text height better
+                                1,
+                                1,
+                                1,
+                                1,
+                                0.5,
+                                0.5,
+                                0.35
                             ]
                         );
 
@@ -290,13 +366,14 @@ const Hero = () => {
                             </motion.div>
                         );
                     })}
-                </div>
+                </motion.div>
 
                 {/* Main Text Section */}
                 <motion.div
                     className="absolute inset-0 flex items-center justify-center px-8 z-20"
                     style={{
                         pointerEvents: 'none',
+                        opacity: contentOpacity
                     }}
                 >
                     <div className="text-center max-w-7xl">

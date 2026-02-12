@@ -7,7 +7,6 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ScrollStory from './components/ScrollStory';
 import DiagonalShapes from './components/DiagonalShapes';
-import LandingShapes from './components/LandingShapes';
 import PowerfulFeatures from './components/PowerfulFeatures';
 import ProjectSection from './components/ProjectSection';
 import NavigatorsSection from './components/NavigatorsSection';
@@ -47,7 +46,6 @@ function App() {
             <Hero />
             <ScrollStory />
             <DiagonalShapes />
-            <LandingShapes />
             <PowerfulFeatures />
             <ProjectSection />
             <NavigatorsSection />
